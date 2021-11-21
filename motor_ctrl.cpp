@@ -23,6 +23,23 @@ uint8_t CarkitMotor::setMotorPwm(uint16_t _pwm)
 uint8_t CarkitMotor::setMotorState(MotorState_t _state)
 {
     state = _state;
+    switch (state)
+    {
+    case MOTOR_POWER_DOWN:
+        /* code */
+        break;
+    case MOTOR_POWER_UP:
+        /* code */
+        break;
+    case MOTOR_STOP:
+        analogWrite(io.pwm_pin, 0);
+        break;
+    case MOTOR_RUN:
+        analogWrite(io.pwm_pin, (uint8_t)pwm);
+        break;
+    default:
+        break;
+    }
 }
 
 uint8_t CarkitMotor::ioInit()
