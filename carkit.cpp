@@ -43,8 +43,11 @@ int8_t Carkit::Init()
 
 int8_t Carkit::Start()
 {
-    m_currentCar.position = m_carkitMap.StartP();
-    m_currentCar.nodeIndex = 0;
+    if (m_carkitMap.Size())
+    {
+        m_currentCar.position = &m_carkitMap.PointList()[0];
+        m_currentCar.nodeIndex = 0;
+    }
 
     m_leftMotor->setMotorState(MOTOR_RUN);
     m_rightMotor->setMotorState(MOTOR_RUN);
@@ -196,7 +199,7 @@ int8_t Carkit::findDirection()
 {
     if (CURRENT_NODE->x == NEXT_NODE.x)
     {
-        switch (CURRENT_NODE->view_port)
+        switch (CURRENT_NODE->view)
         {
         case VIEW_NORTH:
             CAR.nextTurn = CAR_STRAIGHT;
@@ -242,7 +245,7 @@ int8_t Carkit::findDirection()
     }
     else if (CURRENT_NODE->y == NEXT_NODE.y)
     {
-        switch (CURRENT_NODE->view_port)
+        switch (CURRENT_NODE->view)
         {
         case VIEW_NORTH:
             if (CURRENT_NODE->x > NEXT_NODE.x)
