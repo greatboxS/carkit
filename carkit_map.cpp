@@ -112,25 +112,15 @@ int8_t CarkitMap::GetMapFromSDCard()
         {
             if (fileReadLine(m_mapFile, m_buffer, DEFAULT_BUFFER_SIZE))
             {
-                char *sub = strstr((const char *)m_buffer, "start");
-                if (sub != NULL)
+                /**
+                 * start of transaction
+                 * query all header information and start to loop all the points of map
+                 */
+                if (strlen((const char *)m_buffer) > 0)
                 {
-                    sscanf((const char *)sub, "start[%d,%d], end[%d,%d], len[%d]\n",
-                           &m_startP.x,
-                           &m_startP.y,
-                           &m_endP.x,
-                           &m_endP.y,
-                           &m_roadPointsSize);
+                    sscanf((const char *)m_buffer, "%d\n", &m_roadPointsSize);
 #if USE_DEBUG
-                    LOG.print("StartP.x = ");
-                    LOG.println(m_startP.x);
-                    LOG.print("StartP.y = ");
-                    LOG.println(m_startP.y);
-                    LOG.print("EndP.x = ");
-                    LOG.println(m_endP.x);
-                    LOG.print("EndP.x = ");
-                    LOG.println(m_endP.y);
-                    LOG.print("Len = ");
+                    LOG.print("Total point = ");
                     LOG.println(m_roadPointsSize);
 #endif
                     for (uint8_t i = 0; i < m_roadPointsSize; i++)
@@ -182,25 +172,11 @@ void CarkitMap::GetMapFromSerialPort()
          * start of transaction
          * query all header information and start to loop all the points of map
          */
-        char *sub = strstr((const char *)m_buffer, "start");
-        if (sub != NULL)
+        if (strlen((const char *)m_buffer) > 0)
         {
-            sscanf((const char *)sub, "start[%d,%d], end[%d,%d], len[%d]\n",
-                   &m_startP.x,
-                   &m_startP.y,
-                   &m_endP.x,
-                   &m_endP.y,
-                   &m_roadPointsSize);
+            sscanf((const char *)m_buffer, "%d\n", &m_roadPointsSize);
 #if USE_DEBUG
-            LOG.print("StartP.x = ");
-            LOG.println(m_startP.x);
-            LOG.print("StartP.y = ");
-            LOG.println(m_startP.y);
-            LOG.print("EndP.x = ");
-            LOG.println(m_endP.x);
-            LOG.print("EndP.x = ");
-            LOG.println(m_endP.y);
-            LOG.print("Len = ");
+            LOG.print("Total point = ");
             LOG.println(m_roadPointsSize);
 #endif
 
