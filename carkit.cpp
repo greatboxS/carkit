@@ -23,7 +23,7 @@ int8_t Carkit::Init()
 {
     LOG.begin(115200);
     LOG.setTimeout(DEFAULT_SERIAL_TIMEOUT);
-    LOG_I("Carkit initialized\n");
+    FLOG_I(F("Carkit initialized\n"), NULL);
 
     m_leftMotor = new CarkitMotor(LEFT, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_DIR_PIN);
     m_rightMotor = new CarkitMotor(RIGHT, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_DIR_PIN);
@@ -37,7 +37,11 @@ int8_t Carkit::Init()
 
     timerInit();
 
-    m_carkitMap.GetMapFromSDCard();
+    // if no sd card support/ or exsit then load the map from EEPROM
+    if (m_carkitMap.GetMapFromSDCard() != CARKIT_OK)
+    {
+        m_carkitMap.LoadMapFromEEPROM();
+    }
     return 0;
 }
 
@@ -83,16 +87,22 @@ int8_t Carkit::Reset()
  */
 inline int8_t Carkit::loop()
 {
+    // Check for carkit state every SAMPLE_INTERVAL_TIME (50ms) time
     if (millis() - m_tick > SAMPLE_INTERVAL_TIME)
     {
         m_tick = millis();
 
-        if (m_carkitMap.Size() > 0)
-        {
-        }
+        /**
+         * User code here
+         */
     }
 
-    m_carkitMap.GetMapFromSerialPort();
+    // if get a map from serial port successfully, save it to EEPROM
+    if (m_carkitMap.GetMapFromSerialPort() == CARKIT_OK)
+    {
+        m_carkitMap.SaveMapToEEPROM();
+    }
+
     return 0;
 }
 
@@ -182,7 +192,7 @@ int8_t Carkit::timerInit()
     // Using ATmega328 used in UNO => 16MHz CPU clock ,
     if (ITimer1.attachInterruptInterval<Carkit *>(TIMER_INTERVAL_MS, Carkit::CarkitTimerHandler, this))
     {
-        LOG_I("Starting  ITimer1 OK\n");
+        FLOG_I(F("Starting  ITimer1 OK\n"), NULL);
     }
     else
         return -1;
@@ -196,6 +206,11 @@ int8_t Carkit::goStraight()
     return 0;
 }
 
+/**
+ * @brief Temp function, this function will be moved to carkit_map.cpp
+ * 
+ * @return int8_t 
+ */
 int8_t Carkit::findDirection()
 {
     if (CURRENT_NODE->x == NEXT_NODE.x)
@@ -295,7 +310,16 @@ int8_t Carkit::findDirection()
     }
 }
 
+/**
+ * @brief CarkitTimerHandler
+ * Timer 1 interrupt, this timer used for async status checking,
+ * or line detection algorithm
+ * @param carkit 
+ */
 static void Carkit::CarkitTimerHandler(Carkit *carkit)
 {
-    LOG_I("CarkitTimerHandler\n");
+    static int8_t m_newPointDetected = -1;
+    static int8_t m_carTurnNow = -1;
+    
+    FLOG_I(F("CarkitTimerHandler %ld\n"), millis());
 }

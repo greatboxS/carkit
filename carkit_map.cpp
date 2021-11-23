@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "carkit_map.h"
 #include "log.h"
 
@@ -96,13 +97,15 @@ int8_t CarkitMap::GetMapFromSDCard()
     // see if the card is present and can be initialized:
     if (!SD.begin(SD_CHIP_SELECT_PIN))
     {
-        LOG_I("Card failed, or not present\n");
+        FLOG_I(F("Card failed, or not present\n"), NULL);
         return -1;
     }
 
     // open the file. note that only one file can be open at a time,
     // so you have to close this one before opening another.
-    m_mapFile = new File;
+    m_mapFile = (File *)calloc(1, sizeof(File));
+    if (!m_mapFile)
+        return -1;
     *m_mapFile = SD.open(MAP_FILE_NAME);
 
     // if the file is available, write to it:
@@ -119,9 +122,9 @@ int8_t CarkitMap::GetMapFromSDCard()
                  */
                 if (strlen((const char *)m_buffer) > 0)
                 {
-                    sscanf((const char *)m_buffer, "%d\n", &m_roadPointsSize);
+                    sscanf((const char *)m_buffer, "%u\n", &m_roadPointsSize);
 #if USE_DEBUG
-                    LOG_I("Total point = %d\n", m_roadPointsSize);
+                    FLOG_I(F("Total point = %d\n"), m_roadPointsSize);
 #endif
                     for (uint8_t i = 0; i < m_roadPointsSize; i++)
                     {
@@ -133,7 +136,7 @@ int8_t CarkitMap::GetMapFromSDCard()
                                 sscanf((const char *)begin, "(%d, %d)\n", &_X_, &_Y_);
                                 addPoint(_X_, _Y_);
 #if USE_DEBUG
-                                LOG_I("Add new point: (%d, %d)\n", _X_, _Y_);
+                                FLOG_I(F("Add new point: (%d, %d)\n"), _X_, _Y_);
                             }
 #endif
                         }
@@ -150,14 +153,16 @@ int8_t CarkitMap::GetMapFromSDCard()
 
     delete m_buffer;
     m_buffer = NULL;
-    delete m_mapFile;
+    free(m_mapFile);
     m_mapFile = NULL;
 
     return m_roadPointsSize;
 }
 
-void CarkitMap::GetMapFromSerialPort()
+int8_t CarkitMap::GetMapFromSerialPort()
 {
+    int8_t ret = -1;
+    uint8_t counter = 0;
     if (LOG.available() > 0)
     {
         m_buffer = new uint8_t[DEFAULT_BUFFER_SIZE];
@@ -170,11 +175,10 @@ void CarkitMap::GetMapFromSerialPort()
          */
         if (strlen((const char *)m_buffer) > 0)
         {
-            sscanf((const char *)m_buffer, "%d\n", &m_roadPointsSize);
+            sscanf((const char *)m_buffer, "%u\n", &m_roadPointsSize);
 #if USE_DEBUG
-            LOG_I("Total point = %d\n", m_roadPointsSize);
+            FLOG_I(F("Total point = %d\n"), m_roadPointsSize);
 #endif
-
             if (m_roadPointsSize > 0)
             {
                 if (createRoadPoints(m_roadPointsSize))
@@ -195,23 +199,61 @@ void CarkitMap::GetMapFromSerialPort()
                             {
                                 sscanf((const char *)begin, "(%d, %d)\n", &_X_, &_Y_);
                                 addPoint(_X_, _Y_);
+
+                                counter++;
+                                // get done
+                                if (counter == m_roadPointsSize)
+                                {
+                                    ret = 0;
+                                    FLOG_I(F("Get map: success\n"), NULL);
+                                    break;
+                                }
 #if USE_DEBUG
-                                LOG_I("Add new point: (%d, %d)\n", _X_, _Y_);
+                                FLOG_I(F("Add new point: (%d, %d)\n"), _X_, _Y_);
                             }
 #endif
                         }
                         else
                             m_timeout -= 100;
                     }
-
 #if USE_DEBUG
-                    LOG_I("Get map: quit\n");
+                    FLOG_I(F("Get map: timeout\n"), NULL);
 #endif
                 }
             }
         }
         delete m_buffer;
         m_buffer = NULL;
+    }
+
+    return ret;
+}
+
+void CarkitMap::SaveMapToEEPROM()
+{
+    EEPROM.write(EEPROM_BASE_ADDRESS, m_roadPointsSize);
+
+    for (uint16_t i = 0; i < m_roadPointsSize; i++)
+    {
+        EEPROM.put<CPoint_t>(EEPROM_BASE_ADDRESS + 1 + i * sizeof(CPoint_t), m_roadPoints[i]);
+    }
+}
+
+void CarkitMap::LoadMapFromEEPROM()
+{
+    clear();
+    uint8_t size = EEPROM.read(EEPROM_BASE_ADDRESS);
+    if (size > MAX_ROAD_POINT || size == 0)
+    {
+        return;
+    }
+    m_roadPointsSize = size;
+    if (createRoadPoints(m_roadPointsSize))
+    {
+        for (uint16_t i = 0; i < m_roadPointsSize; i++)
+        {
+            EEPROM.get<CPoint_t>(EEPROM_BASE_ADDRESS + 1 + i * sizeof(CPoint_t), m_roadPoints[i]);
+        }
     }
 }
 
@@ -228,4 +270,9 @@ CPoint_t &CarkitMap::EndP()
 uint8_t &CarkitMap::Size()
 {
     return m_roadPointsSize;
+}
+
+CPoint_t *CarkitMap::PointList()
+{
+    return m_roadPoints;
 }

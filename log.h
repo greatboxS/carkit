@@ -23,9 +23,9 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
-#define LOG_BUFFER_SIZE (128U)
+#define LOG_BUFFER_SIZE (256U)
 
-typedef enum log_level_t
+enum log_level_t
 {
     LOG_LEVLE_NONE,
     LOG_LEVEL_INFO,
@@ -35,10 +35,16 @@ typedef enum log_level_t
 };
 
 extern int __log_level__;
-void __printf__(const char *format, ...);
 void __printf__(...);
+void __printf__(const char *format, ...);
+void __printf_from_flash__(const void *format, ...);
 void __set_log_level__(log_level_t level);
 
+/**
+ * This function is normal LOG, it will print a string stored in SRAM
+ * It will cost more SRAM than FLOG but will make the function faster
+ * Eg: LOG_I("Your string %d\n", ur_arg);
+ */
 #define LOG_I(...)                       \
     if (__log_level__ >= LOG_LEVEL_INFO) \
         __printf__(__VA_ARGS__);
@@ -55,4 +61,25 @@ void __set_log_level__(log_level_t level);
     if (__log_level__ >= LOG_LEVEL_ERROR) \
         __printf__(x, __VA_ARGS__);
 
+/**
+ * String is store in program memory, so this method will save 
+ * the SRAM capacity but it will make the function more slower
+ * We have define String with F("Your string")
+ * Eg: FLOG(F("Your string %d"), arg);
+ */
+#define FLOG_I(x, ...)                   \
+    if (__log_level__ >= LOG_LEVEL_INFO) \
+        __printf_from_flash__(x, __VA_ARGS__);
+
+#define FLOG_W(x, ...)                   \
+    if (__log_level__ >= LOG_LEVEL_WARN) \
+        __printf_from_flash__(x, __VA_ARGS__);
+
+#define FLOG_T(x, ...)                    \
+    if (__log_level__ >= LOG_LEVEL_TRACE) \
+        __printf_from_flash__(x, __VA_ARGS__);
+
+#define FLOG_E(x, ...)                    \
+    if (__log_level__ >= LOG_LEVEL_ERROR) \
+        __printf_from_flash__(x, __VA_ARGS__);
 #endif // __LOG_H__

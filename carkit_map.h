@@ -6,6 +6,9 @@
 #include <HardwareSerial.h>
 #include <SPI.h>
 #include <SD.h>
+#include <EEPROM.h>
+
+#define EEPROM_BASE_ADDRESS 0x0F
 
 #define MAP_FILE_NAME "map.txt"
 #define SD_CHIP_SELECT_PIN 4
@@ -16,7 +19,7 @@
  * west ----------------- east
  *              |
  *              |south
- */         
+ */
 
 #define VIEW_NORTH 0
 #define VIEW_EAST 1
@@ -62,12 +65,14 @@ public:
     CarkitMap();
     ~CarkitMap(){};
 
+    int8_t GetMapFromSDCard();
+    int8_t GetMapFromSerialPort();
+    void SaveMapToEEPROM();
+    void LoadMapFromEEPROM();
     CPoint_t &StartP();
     CPoint_t &EndP();
     uint8_t &Size();
     CPoint_t *PointList();
-    int8_t GetMapFromSDCard();
-    void GetMapFromSerialPort();
 };
 
 #endif // __CARKIT_MAP_H__

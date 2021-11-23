@@ -10,7 +10,6 @@
 #include "log.h"
 
 #define USE_TIMER_1 true
-
 #include "TimerInterrupt.h"
 
 #define CARKIT_OK 0
@@ -83,7 +82,7 @@ public:
     int8_t Stop();
     int8_t Reset();
 
-    inline int8_t loop();
+    int8_t loop();
     static void CarkitTimerHandler(Carkit *carkit);
 
 private:
