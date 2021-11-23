@@ -11,9 +11,9 @@
 #define _X_ (m_tempPoint[1])
 #define _Y_ (m_tempPoint[2])
 
-#define NEXT_NODE (m_carkitMap.PointList()[m_currentCar.nodeIndex + 1])
-#define CURRENT_NODE (m_currentCar.position)
-#define CAR (m_currentCar)
+#define NEXT_NODE (m_carkitMap.PointList()[m_car.nodeIndex + 1])
+#define CURRENT_NODE (m_car.position)
+#define CAR (m_car)
 
 Carkit::Carkit()
 {
@@ -23,7 +23,7 @@ int8_t Carkit::Init()
 {
     LOG.begin(115200);
     LOG.setTimeout(DEFAULT_SERIAL_TIMEOUT);
-    LOG.println(F("Carkit initialized"));
+    LOG_I("Carkit initialized\n");
 
     m_leftMotor = new CarkitMotor(LEFT, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_DIR_PIN);
     m_rightMotor = new CarkitMotor(RIGHT, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_DIR_PIN);
@@ -43,10 +43,11 @@ int8_t Carkit::Init()
 
 int8_t Carkit::Start()
 {
+    LOG_I("Start\n");
     if (m_carkitMap.Size())
     {
-        m_currentCar.position = &m_carkitMap.PointList()[0];
-        m_currentCar.nodeIndex = 0;
+        m_car.position = &m_carkitMap.PointList()[0];
+        m_car.nodeIndex = 0;
     }
 
     m_leftMotor->setMotorState(MOTOR_RUN);
@@ -181,7 +182,7 @@ int8_t Carkit::timerInit()
     // Using ATmega328 used in UNO => 16MHz CPU clock ,
     if (ITimer1.attachInterruptInterval<Carkit *>(TIMER_INTERVAL_MS, Carkit::CarkitTimerHandler, this))
     {
-        Serial.println("Starting  ITimer1 OK");
+        LOG_I("Starting  ITimer1 OK\n");
     }
     else
         return -1;
@@ -296,6 +297,5 @@ int8_t Carkit::findDirection()
 
 static void Carkit::CarkitTimerHandler(Carkit *carkit)
 {
-    carkit->m_carState = 1;
-    // Serial.println("Timer handler");
+    LOG_I("CarkitTimerHandler\n");
 }

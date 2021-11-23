@@ -28,6 +28,7 @@ typedef struct _CPoint_t
     int8_t x;
     int8_t y;
     uint8_t view;
+    uint8_t state;
     void clear()
     {
         x = 0;
@@ -50,7 +51,6 @@ private:
     int32_t m_timeout;
 
     int8_t fileReadLine(File *file, uint8_t *buff, uint8_t len);
-
     void setStartP(int8_t x, int8_t y);
     void setEndP(int8_t x, int8_t y);
     void clear();

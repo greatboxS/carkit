@@ -7,6 +7,7 @@
 #include <string.h>
 #include "motor_ctrl.h"
 #include "carkit_map.h"
+#include "log.h"
 
 #define USE_TIMER_1 true
 
@@ -94,7 +95,7 @@ private:
     CarkitMap m_carkitMap;
     uint8_t *m_buffer;
 
-    struct CarCurrentPoint_t
+    struct Car_t
     {
         CPoint_t *position;  // current position
         uint8_t nodeIndex;   // current node index of node list
@@ -102,7 +103,7 @@ private:
         uint8_t curDir;      // current direction
         uint8_t nextTurn;    // next turning
         int8_t newNodeFound; // indicates if new node is found
-    } m_currentCar;
+    } m_car;
 
     struct LineSensor_t
     {

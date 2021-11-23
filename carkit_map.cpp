@@ -1,4 +1,5 @@
 #include "carkit_map.h"
+#include "log.h"
 
 #define LOG Serial
 #define DEFAULT_BUFFER_SIZE (256)
@@ -95,7 +96,7 @@ int8_t CarkitMap::GetMapFromSDCard()
     // see if the card is present and can be initialized:
     if (!SD.begin(SD_CHIP_SELECT_PIN))
     {
-        LOG.println("Card failed, or not present");
+        LOG_I("Card failed, or not present\n");
         return -1;
     }
 
@@ -120,8 +121,7 @@ int8_t CarkitMap::GetMapFromSDCard()
                 {
                     sscanf((const char *)m_buffer, "%d\n", &m_roadPointsSize);
 #if USE_DEBUG
-                    LOG.print("Total point = ");
-                    LOG.println(m_roadPointsSize);
+                    LOG_I("Total point = %d\n", m_roadPointsSize);
 #endif
                     for (uint8_t i = 0; i < m_roadPointsSize; i++)
                     {
@@ -133,11 +133,7 @@ int8_t CarkitMap::GetMapFromSDCard()
                                 sscanf((const char *)begin, "(%d, %d)\n", &_X_, &_Y_);
                                 addPoint(_X_, _Y_);
 #if USE_DEBUG
-                                LOG.print(F("Add new point: ("));
-                                LOG.print(_X_);
-                                LOG.print(", ");
-                                LOG.print(_Y_);
-                                LOG.println(")");
+                                LOG_I("Add new point: (%d, %d)\n", _X_, _Y_);
                             }
 #endif
                         }
@@ -176,8 +172,7 @@ void CarkitMap::GetMapFromSerialPort()
         {
             sscanf((const char *)m_buffer, "%d\n", &m_roadPointsSize);
 #if USE_DEBUG
-            LOG.print("Total point = ");
-            LOG.println(m_roadPointsSize);
+            LOG_I("Total point = %d\n", m_roadPointsSize);
 #endif
 
             if (m_roadPointsSize > 0)
@@ -201,11 +196,7 @@ void CarkitMap::GetMapFromSerialPort()
                                 sscanf((const char *)begin, "(%d, %d)\n", &_X_, &_Y_);
                                 addPoint(_X_, _Y_);
 #if USE_DEBUG
-                                LOG.print(F("Add new point: ("));
-                                LOG.print(_X_);
-                                LOG.print(", ");
-                                LOG.print(_Y_);
-                                LOG.println(")");
+                                LOG_I("Add new point: (%d, %d)\n", _X_, _Y_);
                             }
 #endif
                         }
@@ -214,7 +205,7 @@ void CarkitMap::GetMapFromSerialPort()
                     }
 
 #if USE_DEBUG
-                    LOG.println(F("Get map: quit"));
+                    LOG_I("Get map: quit\n");
 #endif
                 }
             }

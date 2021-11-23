@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "AFMotor.h"
 
 #define LEFT (0U)
 #define RIGHT (1U)
