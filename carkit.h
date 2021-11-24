@@ -23,13 +23,6 @@
 #define TIMER_INTERVAL_MS 50
 #define TIMER_DURATION_MS 0
 
-/*
-*/
-#define LEFT_MOTOR_PWM_PIN 2
-#define LEFT_MOTOR_DIR_PIN 3
-#define RIGHT_MOTOR_PWM_PIN 4
-#define RIGHT_MOTOR_DIR_PIN 5
-
 /**
  * Digital input pin for 3 line detection sensors
  */
@@ -137,7 +130,6 @@ private:
     int8_t turnAround();
     int8_t timerInit();
     int8_t goStraight();
-    int8_t findDirection();
 };
 
 #endif // __CARKIT_H__

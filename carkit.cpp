@@ -11,10 +11,6 @@
 #define _X_ (m_tempPoint[1])
 #define _Y_ (m_tempPoint[2])
 
-#define NEXT_NODE (m_carkitMap.PointList()[m_car.nodeIndex + 1])
-#define CURRENT_NODE (m_car.position)
-#define CAR (m_car)
-
 Carkit::Carkit()
 {
 }
@@ -25,8 +21,8 @@ int8_t Carkit::Init()
     LOG.setTimeout(DEFAULT_SERIAL_TIMEOUT);
     FLOG_I(F("Carkit initialized\n"), NULL);
 
-    m_leftMotor = new CarkitMotor(LEFT, LEFT_MOTOR_PWM_PIN, LEFT_MOTOR_DIR_PIN);
-    m_rightMotor = new CarkitMotor(RIGHT, RIGHT_MOTOR_PWM_PIN, RIGHT_MOTOR_DIR_PIN);
+    m_leftMotor = new CarkitMotor(LEFT_MOTOR);
+    m_rightMotor = new CarkitMotor(RIGHT_MOTOR);
 
     m_leftMotor->setMotorState(MOTOR_POWER_UP);
     m_rightMotor->setMotorState(MOTOR_POWER_UP);
@@ -204,110 +200,6 @@ int8_t Carkit::goStraight()
     m_leftMotor->setMotorState(MOTOR_RUN);
     m_rightMotor->setMotorState(MOTOR_RUN);
     return 0;
-}
-
-/**
- * @brief Temp function, this function will be moved to carkit_map.cpp
- * 
- * @return int8_t 
- */
-int8_t Carkit::findDirection()
-{
-    if (CURRENT_NODE->x == NEXT_NODE.x)
-    {
-        switch (CURRENT_NODE->view)
-        {
-        case VIEW_NORTH:
-            CAR.nextTurn = CAR_STRAIGHT;
-            NEXT_NODE.view = VIEW_NORTH;
-            break;
-
-        case VIEW_SOUTH:
-            CAR.nextTurn = CAR_STRAIGHT;
-            NEXT_NODE.view = VIEW_SOUTH;
-            break;
-
-        case VIEW_EAST:
-            if (CURRENT_NODE->y > NEXT_NODE.y)
-            {
-                CAR.nextTurn = CAR_TURN_LEFT;
-                NEXT_NODE.view = VIEW_NORTH;
-            }
-            else
-            {
-                CAR.nextTurn = CAR_TURN_RIGHT;
-                NEXT_NODE.view = VIEW_SOUTH;
-            }
-            break;
-
-        case VIEW_WEST:
-            if (CURRENT_NODE->y > NEXT_NODE.y)
-            {
-                CAR.nextTurn = CAR_TURN_RIGHT;
-                NEXT_NODE.view = VIEW_NORTH;
-            }
-            else
-            {
-                CAR.nextTurn = CAR_TURN_LEFT;
-                NEXT_NODE.view = VIEW_SOUTH;
-            }
-            break;
-
-        default:
-            CAR.nextTurn = CAR_STRAIGHT;
-            NEXT_NODE.view = CURRENT_NODE->view;
-            break;
-        }
-    }
-    else if (CURRENT_NODE->y == NEXT_NODE.y)
-    {
-        switch (CURRENT_NODE->view)
-        {
-        case VIEW_NORTH:
-            if (CURRENT_NODE->x > NEXT_NODE.x)
-            {
-                CAR.nextTurn = CAR_TURN_RIGHT;
-                NEXT_NODE.view = VIEW_EAST;
-            }
-            else
-            {
-                CAR.nextTurn = CAR_TURN_LEFT;
-                NEXT_NODE.view = VIEW_WEST;
-            }
-            break;
-
-        case VIEW_SOUTH:
-            if (CURRENT_NODE->x > NEXT_NODE.x)
-            {
-                CAR.nextTurn = CAR_TURN_LEFT;
-                NEXT_NODE.view = VIEW_EAST;
-            }
-            else
-            {
-                CAR.nextTurn = CAR_TURN_RIGHT;
-                NEXT_NODE.view = VIEW_WEST;
-            }
-            break;
-
-        case VIEW_EAST:
-            CAR.nextTurn = CAR_STRAIGHT;
-            NEXT_NODE.view = VIEW_EAST;
-            break;
-
-        case VIEW_WEST:
-            CAR.nextTurn = CAR_STRAIGHT;
-            NEXT_NODE.view = VIEW_WEST;
-            break;
-
-        default:
-            CAR.nextTurn = CAR_STRAIGHT;
-            NEXT_NODE.view = CURRENT_NODE->view;
-            break;
-        }
-    }
-    else
-    {
-    }
 }
 
 /**

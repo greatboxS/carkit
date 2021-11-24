@@ -8,16 +8,29 @@ CarkitMotor::CarkitMotor(uint8_t _id, uint8_t _pwm_pin, uint8_t _dir_pin) : id(_
     ioInit();
 }
 
+CarkitMotor::CarkitMotor(uint8_t _number, uint8_t _pwm)
+{
+    motor = new AF_DCMotor(_number);
+    pwm = _pwm;
+    direction = DIR_FORWARD;
+    motor->setSpeed(0);
+    motor->run(RELEASE);
+}
+
 uint8_t CarkitMotor::setMotorDir(uint8_t _dir)
 {
     direction = _dir;
-    digitalWrite(io.dir_pin, direction);
+    if (mode == 1)
+        digitalWrite(io.dir_pin, direction);
 }
 
 uint8_t CarkitMotor::setMotorPwm(uint16_t _pwm)
 {
     pwm = _pwm;
-    analogWrite(io.pwm_pin, (uint8_t)pwm);
+    if (mode == 1)
+        analogWrite(io.pwm_pin, (uint8_t)pwm);
+    else
+        motor->setSpeed(pwm);
 }
 
 uint8_t CarkitMotor::setMotorState(MotorState_t _state)
@@ -26,16 +39,27 @@ uint8_t CarkitMotor::setMotorState(MotorState_t _state)
     switch (state)
     {
     case MOTOR_POWER_DOWN:
-        /* code */
-        break;
     case MOTOR_POWER_UP:
-        /* code */
+        motor->setSpeed(0);
+        motor->run(RELEASE);
         break;
     case MOTOR_STOP:
-        analogWrite(io.pwm_pin, 0);
+        if (mode == 1)
+            analogWrite(io.pwm_pin, 0);
+        else
+        {
+            motor->setSpeed(0);
+            motor->run(RELEASE);
+        }
         break;
     case MOTOR_RUN:
-        analogWrite(io.pwm_pin, (uint8_t)pwm);
+        if (mode == 1)
+            analogWrite(io.pwm_pin, (uint8_t)pwm);
+        else
+        {
+            motor->setSpeed(pwm);
+            motor->run(direction);
+        }
         break;
     default:
         break;

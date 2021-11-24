@@ -26,12 +26,24 @@
 #define VIEW_SOUTH 2
 #define VIEW_WEST 3
 
+#define GO_STRAIGHT 0
+#define GO_LEFT 1
+#define GO_RIGHT 2
+
 typedef struct _CPoint_t
 {
     int8_t x;
     int8_t y;
-    uint8_t view;
-    uint8_t state;
+    uint8_t view;  // south / north / west / east
+    uint8_t state; // finished or not
+    uint8_t turn;  // got straight /  left / right
+
+    void init(uint8_t _view, uint8_t _turn)
+    {
+        state = 0;
+        view = _view;
+        turn = _turn;
+    }
     void clear()
     {
         x = 0;
@@ -60,6 +72,7 @@ private:
     void freeRoadPoints();
     void *createRoadPoints(uint8_t size);
     void addPoint(int8_t x, int8_t y);
+    int8_t preProcessMap();
 
 public:
     CarkitMap();

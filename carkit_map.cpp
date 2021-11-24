@@ -9,6 +9,8 @@
 #define USE_DEBUG 1
 #endif
 
+#define NODE(x) (m_roadPoints[x])
+
 void CarkitMap::setStartP(int8_t x, int8_t y)
 {
     m_startP.x = x;
@@ -56,6 +58,121 @@ void CarkitMap::addPoint(int8_t x, int8_t y)
     }
 }
 
+int8_t CarkitMap::preProcessMap()
+{
+    uint8_t index = 0;
+    if (m_roadPointsSize > 0)
+    {
+        for (uint8_t i = 0; i < m_roadPointsSize; i++)
+        {
+            if (i == m_roadPointsSize - 1)
+                break;
+
+            // In the vertical line
+            if (NODE(i).x == NODE(i + 1).x)
+            {
+                // if the first, then init the view of start point
+                // point ahead to next node
+                if (i == 0)
+                {
+                    if (NODE(i).y < NODE(i + 1).y)
+                        NODE(i).view = VIEW_NORTH;
+                    else
+                        NODE(i).view = VIEW_SOUTH;
+                }
+
+                switch (NODE(i).view)
+                {
+                case VIEW_NORTH:
+                    NODE(i + 1).init(VIEW_NORTH, GO_STRAIGHT);
+                    break;
+
+                case VIEW_SOUTH:
+                    NODE(i + 1).init(VIEW_SOUTH, GO_STRAIGHT);
+                    break;
+
+                case VIEW_EAST:
+                    if (NODE(i).y > NODE(i + 1).y)
+                    {
+                        NODE(i + 1).init(VIEW_NORTH, GO_LEFT);
+                    }
+                    else
+                    {
+                        NODE(i + 1).init(VIEW_SOUTH, GO_RIGHT);
+                    }
+                    break;
+
+                case VIEW_WEST:
+                    if (NODE(i).y > NODE(i + 1).y)
+                    {
+                        NODE(i + 1).init(VIEW_NORTH, GO_RIGHT);
+                    }
+                    else
+                    {
+                        NODE(i + 1).init(VIEW_SOUTH, GO_LEFT);
+                    }
+                    break;
+
+                default:
+                    NODE(i + 1).init(NODE(i).view, GO_STRAIGHT);
+                    break;
+                }
+            }
+            // in the horizontal line
+            else if (NODE(i).y == NODE(i + 1).y)
+            {
+                if (i == 0)
+                {
+                    if (NODE(i).x < NODE(i + 1).x)
+                        NODE(i).view = VIEW_EAST;
+                    else
+                        NODE(i).view = VIEW_WEST;
+                }
+
+                switch (NODE(i).view)
+                {
+                case VIEW_NORTH:
+                    if (NODE(i).x > NODE(i + 1).x)
+                    {
+                        NODE(i + 1).init(VIEW_EAST, GO_RIGHT);
+                    }
+                    else
+                    {
+                        NODE(i + 1).init(VIEW_WEST, GO_LEFT);
+                    }
+                    break;
+
+                case VIEW_SOUTH:
+                    if (NODE(i).x > NODE(i + 1).x)
+                    {
+                        NODE(i + 1).init(VIEW_EAST, GO_LEFT);
+                    }
+                    else
+                    {
+                        NODE(i + 1).init(VIEW_WEST, GO_RIGHT);
+                    }
+                    break;
+
+                case VIEW_EAST:
+                    NODE(i + 1).init(VIEW_EAST, GO_STRAIGHT);
+                    break;
+
+                case VIEW_WEST:
+                    NODE(i + 1).init(VIEW_WEST, GO_STRAIGHT);
+                    break;
+
+                default:
+                    NODE(i + 1).init(NODE(i).view, GO_STRAIGHT);
+                    break;
+                }
+            }
+            else
+            {
+            }
+        }
+    }
+}
+
 int8_t CarkitMap::fileReadLine(File *file, uint8_t *buff, uint8_t len)
 {
     uint8_t index = 0;
@@ -78,7 +195,7 @@ int8_t CarkitMap::fileReadLine(File *file, uint8_t *buff, uint8_t len)
     return index;
 }
 
-/**
+/**`
  * @brief Public function
  */
 CarkitMap::CarkitMap()
@@ -150,6 +267,8 @@ int8_t CarkitMap::GetMapFromSDCard()
     }
     else
         return -1;
+
+    preProcessMap();
 
     delete m_buffer;
     m_buffer = NULL;
@@ -226,11 +345,15 @@ int8_t CarkitMap::GetMapFromSerialPort()
         m_buffer = NULL;
     }
 
+    if (ret == 0)
+        preProcessMap();
+
     return ret;
 }
 
 void CarkitMap::SaveMapToEEPROM()
 {
+    FLOG_I(F("Save the Map to EEPROM\n"), NULL);
     EEPROM.write(EEPROM_BASE_ADDRESS, m_roadPointsSize);
 
     for (uint16_t i = 0; i < m_roadPointsSize; i++)
@@ -245,9 +368,11 @@ void CarkitMap::LoadMapFromEEPROM()
     uint8_t size = EEPROM.read(EEPROM_BASE_ADDRESS);
     if (size > MAX_ROAD_POINT || size == 0)
     {
+        FLOG_I(F("Load Map from EEPROM failed\n"), NULL);
         return;
     }
     m_roadPointsSize = size;
+    FLOG_I(F("Total point has loaded = %u\n"), size);
     if (createRoadPoints(m_roadPointsSize))
     {
         for (uint16_t i = 0; i < m_roadPointsSize; i++)
