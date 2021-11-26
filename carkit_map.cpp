@@ -4,7 +4,7 @@
 
 #define LOG Serial
 #define DEFAULT_BUFFER_SIZE (256)
-#define GET_MAP_TIMEOUT (10000)
+#define GET_MAP_TIMEOUT (20000)
 #ifndef USE_DEBUG
 #define USE_DEBUG 1
 #endif
@@ -60,7 +60,6 @@ void CarkitMap::addPoint(int8_t x, int8_t y)
 
 int8_t CarkitMap::preProcessMap()
 {
-    uint8_t index = 0;
     if (m_roadPointsSize > 0)
     {
         for (uint8_t i = 0; i < m_roadPointsSize; i++)
@@ -171,6 +170,7 @@ int8_t CarkitMap::preProcessMap()
             }
         }
     }
+    return 0;
 }
 
 int8_t CarkitMap::fileReadLine(File *file, uint8_t *buff, uint8_t len)
@@ -400,4 +400,17 @@ uint8_t &CarkitMap::Size()
 CPoint_t *CarkitMap::PointList()
 {
     return m_roadPoints;
+}
+
+CPoint_t *CarkitMap::GetNextPoint()
+{
+    static int8_t index = -1;
+    if (m_roadPoints)
+    {
+        if (index >= m_roadPointsSize)
+            return NULL;
+        return &m_roadPoints[++index];
+    }
+    else
+        return NULL;
 }

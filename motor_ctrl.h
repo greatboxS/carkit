@@ -10,6 +10,7 @@
 #define MIDDLE (2U)
 #define DIR_FORWARD (1U)
 #define DIR_BACKWARD (2U)
+#define MAX_MOTOR_SPEED (255U)
 #define DEFAULT_PWM (200U)
 
 #define LEFT_MOTOR 1
@@ -44,7 +45,7 @@ public:
     CarkitMotor(uint8_t _id, uint8_t _pwm_pin, uint8_t _dir_pin);
     CarkitMotor(uint8_t _number, uint8_t _pwm = DEFAULT_PWM);
     uint8_t setMotorDir(uint8_t _dir);
-    uint8_t setMotorPwm(uint16_t _pwm);
+    uint8_t setMotorSpeed(uint16_t _pwm);
     uint8_t setMotorState(MotorState_t _state);
 
 private:

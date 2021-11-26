@@ -30,7 +30,7 @@
 #define GO_LEFT 1
 #define GO_RIGHT 2
 
-typedef struct _CPoint_t
+struct _CPoint_t
 {
     int8_t x;
     int8_t y;
@@ -49,7 +49,54 @@ typedef struct _CPoint_t
         x = 0;
         y = 0;
     }
-} CPoint_t;
+
+    _CPoint_t &operator=(const _CPoint_t &point)
+    {
+        memcpy(this, &point, sizeof(_CPoint_t));
+        return *this;
+    }
+
+    bool operator>(const _CPoint_t &point)
+    {
+        if (this->x == point.y)
+            return (this->y > point.y) ? true : false;
+        else if (this->y == point.y)
+            return (this->x > point.x) ? true : false;
+        else
+            return false;
+    }
+
+    _CPoint_t &operator++()
+    {
+        switch (this->view)
+        {
+        case VIEW_NORTH:
+            this->y++;
+            break;
+        case VIEW_EAST:
+            this->x++;
+            break;
+        case VIEW_SOUTH:
+            this->y--;
+            break;
+        case VIEW_WEST:
+            this->x--;
+            break;
+        default:
+            this->x++;
+            this->y++;
+            break;
+        }
+        return *this;
+    }
+
+    bool operator==(const _CPoint_t &point)
+    {
+        return ((this->x == point.x) && (this->y == point.y));
+    }
+};
+
+typedef struct _CPoint_t CPoint_t;
 
 class CarkitMap
 {
@@ -86,6 +133,7 @@ public:
     CPoint_t &EndP();
     uint8_t &Size();
     CPoint_t *PointList();
+    CPoint_t *GetNextPoint();
 };
 
 #endif // __CARKIT_MAP_H__

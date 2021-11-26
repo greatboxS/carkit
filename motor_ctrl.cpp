@@ -24,7 +24,7 @@ uint8_t CarkitMotor::setMotorDir(uint8_t _dir)
         digitalWrite(io.dir_pin, direction);
 }
 
-uint8_t CarkitMotor::setMotorPwm(uint16_t _pwm)
+uint8_t CarkitMotor::setMotorSpeed(uint16_t _pwm)
 {
     pwm = _pwm;
     if (mode == 1)

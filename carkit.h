@@ -20,7 +20,7 @@
  * TimerInterrupt macros
  * 
  */
-#define TIMER_INTERVAL_MS 50
+#define TIMER_INTERVAL_MS 20
 #define TIMER_DURATION_MS 0
 
 /**
@@ -56,13 +56,14 @@ class Carkit
     {
         CAR_STOP,
         CAR_RUN,
-    };
-
-    enum CarTurn_e
-    {
-        CAR_STRAIGHT,
         CAR_TURN_LEFT,
         CAR_TURN_RIGHT,
+    };
+    enum CarRunningState_e
+    {
+        CAR_IDLE,
+        CAR_STARTED,
+        CAR_FINISHED,
     };
 
 public:
@@ -79,23 +80,25 @@ public:
     static void CarkitTimerHandler(Carkit *carkit);
 
 private:
-    uint8_t m_carState;
     CarkitMotor *m_leftMotor;
     CarkitMotor *m_rightMotor;
     unsigned long m_tick;
     int32_t timeout;
-    CarkitMap m_carkitMap;
     uint8_t *m_buffer;
 
     struct Car_t
     {
-        CPoint_t *position;  // current position
-        uint8_t nodeIndex;   // current node index of node list
-        uint8_t nextDir;     // next direction
-        uint8_t curDir;      // current direction
-        uint8_t nextTurn;    // next turning
-        int8_t newNodeFound; // indicates if new node is found
-    } m_car;
+        CPoint_t currentNode;  // current position
+        CPoint_t * nextNode;
+        int8_t carStatus;
+        int8_t carState;
+        bool newCheckPointDetected;
+        CarkitMap map;
+        int32_t waitTick;
+        uint8_t leftMotorSpeed;
+        uint8_t rightMotorSpeed;
+
+    } m_carkit;
 
     struct LineSensor_t
     {

@@ -21,6 +21,7 @@ Carkit carkit;
 void setup()
 {
     carkit.Init();
+    carkit.Start();
 }
 
 void loop()
