@@ -7,7 +7,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <EEPROM.h>
-
+#include "log.h"
 #define EEPROM_BASE_ADDRESS 0x0F
 
 #define MAP_FILE_NAME "map.txt"
@@ -71,16 +71,48 @@ struct _CPoint_t
         switch (this->view)
         {
         case VIEW_NORTH:
-            this->y++;
+            if (this->turn != GO_STRAIGHT)
+            {
+                if (this->turn == GO_LEFT)
+                    this->x--;
+                else
+                    this->x++;
+            }
+            else
+                this->y++;
             break;
         case VIEW_EAST:
-            this->x++;
+            if (this->turn != GO_STRAIGHT)
+            {
+                if (this->turn == GO_LEFT)
+                    this->y++;
+                else
+                    this->y--;
+            }
+            else
+                this->x++;
             break;
         case VIEW_SOUTH:
-            this->y--;
+            if (this->turn != GO_STRAIGHT)
+            {
+                if (this->turn == GO_LEFT)
+                    this->x--;
+                else
+                    this->x++;
+            }
+            else
+                this->y--;
             break;
         case VIEW_WEST:
-            this->x--;
+            if (this->turn != GO_STRAIGHT)
+            {
+                if (this->turn == GO_LEFT)
+                    this->y--;
+                else
+                    this->y++;
+            }
+            else
+                this->x--;
             break;
         default:
             this->x++;

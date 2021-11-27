@@ -11,14 +11,14 @@
 #define DIR_FORWARD (1U)
 #define DIR_BACKWARD (2U)
 #define MAX_MOTOR_SPEED (255U)
-#define DEFAULT_PWM (200U)
+#define DEFAULT_PWM (150U)
 
-#define LEFT_MOTOR 1
-#define RIGHT_MOTOR 2
+#define LEFT_MOTOR 4U
+#define RIGHT_MOTOR 3U
 
 typedef enum _MotorState_e
 {
-    MOTOR_POWER_DOWN,
+    MOTOR_POWER_DOWN = 0,
     MOTOR_POWER_UP,
     MOTOR_STOP,
     MOTOR_RUN,
@@ -38,12 +38,12 @@ private:
         uint8_t dir_pin;
     } io;
 
-    AF_DCMotor *motor;
+    const AF_DCMotor *motor;
     uint8_t mode;
 
 public:
     CarkitMotor(uint8_t _id, uint8_t _pwm_pin, uint8_t _dir_pin);
-    CarkitMotor(uint8_t _number, uint8_t _pwm = DEFAULT_PWM);
+    CarkitMotor(uint8_t _number, uint8_t _dir = FORWARD);
     uint8_t setMotorDir(uint8_t _dir);
     uint8_t setMotorSpeed(uint16_t _pwm);
     uint8_t setMotorState(MotorState_t _state);

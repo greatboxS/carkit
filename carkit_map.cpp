@@ -60,6 +60,7 @@ void CarkitMap::addPoint(int8_t x, int8_t y)
 
 int8_t CarkitMap::preProcessMap()
 {
+    FLOG_I(F("preProcessMap\n"), NULL);
     if (m_roadPointsSize > 0)
     {
         for (uint8_t i = 0; i < m_roadPointsSize; i++)
@@ -84,36 +85,43 @@ int8_t CarkitMap::preProcessMap()
                 {
                 case VIEW_NORTH:
                     NODE(i + 1).init(VIEW_NORTH, GO_STRAIGHT);
+                    NODE(i).turn = GO_STRAIGHT;
                     break;
 
                 case VIEW_SOUTH:
                     NODE(i + 1).init(VIEW_SOUTH, GO_STRAIGHT);
+                    NODE(i).turn = GO_STRAIGHT;
                     break;
 
                 case VIEW_EAST:
-                    if (NODE(i).y > NODE(i + 1).y)
+                    if (NODE(i + 1).y > NODE(i).y)
                     {
                         NODE(i + 1).init(VIEW_NORTH, GO_LEFT);
+                        NODE(i).turn = GO_LEFT;
                     }
                     else
                     {
                         NODE(i + 1).init(VIEW_SOUTH, GO_RIGHT);
+                        NODE(i).turn = GO_RIGHT;
                     }
                     break;
 
                 case VIEW_WEST:
-                    if (NODE(i).y > NODE(i + 1).y)
+                    if (NODE(i + 1).y > NODE(i).y)
                     {
                         NODE(i + 1).init(VIEW_NORTH, GO_RIGHT);
+                        NODE(i).turn = GO_RIGHT;
                     }
                     else
                     {
                         NODE(i + 1).init(VIEW_SOUTH, GO_LEFT);
+                        NODE(i).turn = GO_LEFT;
                     }
                     break;
 
                 default:
                     NODE(i + 1).init(NODE(i).view, GO_STRAIGHT);
+                    NODE(i).turn = GO_STRAIGHT;
                     break;
                 }
             }
@@ -122,7 +130,7 @@ int8_t CarkitMap::preProcessMap()
             {
                 if (i == 0)
                 {
-                    if (NODE(i).x < NODE(i + 1).x)
+                    if (NODE(i + 1).x > NODE(i).x)
                         NODE(i).view = VIEW_EAST;
                     else
                         NODE(i).view = VIEW_WEST;
@@ -131,43 +139,53 @@ int8_t CarkitMap::preProcessMap()
                 switch (NODE(i).view)
                 {
                 case VIEW_NORTH:
-                    if (NODE(i).x > NODE(i + 1).x)
+                    if (NODE(i + 1).x > NODE(i).x)
                     {
                         NODE(i + 1).init(VIEW_EAST, GO_RIGHT);
+                        NODE(i).turn = GO_RIGHT;
                     }
                     else
                     {
                         NODE(i + 1).init(VIEW_WEST, GO_LEFT);
+                        NODE(i).turn = GO_LEFT;
                     }
                     break;
 
                 case VIEW_SOUTH:
-                    if (NODE(i).x > NODE(i + 1).x)
+                    if (NODE(i + 1).x > NODE(i).x)
                     {
                         NODE(i + 1).init(VIEW_EAST, GO_LEFT);
+                        NODE(i).turn = GO_LEFT;
                     }
                     else
                     {
                         NODE(i + 1).init(VIEW_WEST, GO_RIGHT);
+                        NODE(i).turn = GO_RIGHT;
                     }
                     break;
 
                 case VIEW_EAST:
                     NODE(i + 1).init(VIEW_EAST, GO_STRAIGHT);
+                    NODE(i).turn = GO_STRAIGHT;
+
                     break;
 
                 case VIEW_WEST:
                     NODE(i + 1).init(VIEW_WEST, GO_STRAIGHT);
+                    NODE(i).turn = GO_STRAIGHT;
                     break;
 
                 default:
                     NODE(i + 1).init(NODE(i).view, GO_STRAIGHT);
+                    NODE(i).turn = GO_STRAIGHT;
                     break;
                 }
             }
             else
             {
             }
+
+            FLOG_I(F("Node [%d]: (%d,%d), view: %d, turn: %d\n"), i, NODE(i).x, NODE(i).y, NODE(i).view, NODE(i).turn);
         }
     }
     return 0;
@@ -336,7 +354,8 @@ int8_t CarkitMap::GetMapFromSerialPort()
                             m_timeout -= 100;
                     }
 #if USE_DEBUG
-                    FLOG_I(F("Get map: timeout\n"), NULL);
+                    if (m_timeout < 0)
+                        FLOG_I(F("Get map: timeout\n"), NULL);
 #endif
                 }
             }
@@ -404,12 +423,14 @@ CPoint_t *CarkitMap::PointList()
 
 CPoint_t *CarkitMap::GetNextPoint()
 {
-    static int8_t index = -1;
+    static int8_t index = 0;
     if (m_roadPoints)
     {
         if (index >= m_roadPointsSize)
             return NULL;
-        return &m_roadPoints[++index];
+
+        FLOG_I(F("Get next point: (%d, %d)\n"), m_roadPoints[index].x, m_roadPoints[index].y);
+        return &m_roadPoints[index++];
     }
     else
         return NULL;

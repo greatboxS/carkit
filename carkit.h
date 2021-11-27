@@ -20,15 +20,15 @@
  * TimerInterrupt macros
  * 
  */
-#define TIMER_INTERVAL_MS 20
+#define TIMER_INTERVAL_MS 10
 #define TIMER_DURATION_MS 0
 
 /**
  * Digital input pin for 3 line detection sensors
  */
-#define DI_MIDDL_PIN 6
-#define DI_LEFT_PIN 7
-#define DI_RIGHT_PIN 8
+#define DI_MIDDL_PIN A4
+#define DI_LEFT_PIN A3
+#define DI_RIGHT_PIN A5
 
 /**
  * Analog input pin for 3 line detection sensors
@@ -40,12 +40,16 @@
 #define MAX_IO_LINE_SENSOR 3
 #define SAMPLE_INTERVAL_TIME 50
 
+#define USE_SD_CARD 0
 /**
  * TIMEOUT
  */
 #define DEFAULT_SERIAL_TIMEOUT (100)
 
 #define CHECK_LINE_SENSOR_TIMEOUT (10000)
+
+#define MAX_SPEED 180
+#define MIN_SPEED 130
 /**
  * @brief Cakit class
  * 
@@ -93,6 +97,7 @@ private:
         int8_t carStatus;
         int8_t carState;
         bool newCheckPointDetected;
+        uint8_t nextTurn;
         CarkitMap map;
         int32_t waitTick;
         uint8_t leftMotorSpeed;
