@@ -38,7 +38,7 @@
 #define AI_RIGHT_PIN A2
 
 #define MAX_IO_LINE_SENSOR 3
-#define SAMPLE_INTERVAL_TIME 50
+#define SAMPLE_INTERVAL_TIME 10
 
 #define USE_SD_CARD 0
 /**
@@ -46,10 +46,12 @@
  */
 #define DEFAULT_SERIAL_TIMEOUT (100)
 
-#define CHECK_LINE_SENSOR_TIMEOUT (10000)
+#define CHECK_LINE_SENSOR_TIMEOUT (5000)
 
-#define MAX_SPEED 180
-#define MIN_SPEED 130
+#define DEFAULT_SPEED 150U
+#define MAX_SPEED 210U
+#define MIN_SPEED 110U
+#define TURN_SPEED 110U
 /**
  * @brief Cakit class
  * 
@@ -60,6 +62,7 @@ class Carkit
     {
         CAR_STOP,
         CAR_RUN,
+        CAR_GO_STRAIGHT,
         CAR_TURN_LEFT,
         CAR_TURN_RIGHT,
     };
@@ -92,16 +95,18 @@ private:
 
     struct Car_t
     {
-        CPoint_t currentNode;  // current position
-        CPoint_t * nextNode;
-        int8_t carStatus;
-        int8_t carState;
-        bool newCheckPointDetected;
+        CPoint_t currentNode; // current position
+        CPoint_t *nextNode;
+        volatile int8_t carStatus;
+        volatile int8_t carState;
+        volatile uint8_t carDir;
+        volatile bool newCheckPointDetected;
         uint8_t nextTurn;
         CarkitMap map;
         int32_t waitTick;
-        uint8_t leftMotorSpeed;
-        uint8_t rightMotorSpeed;
+        volatile uint8_t leftMotorSpeed;
+        volatile uint8_t rightMotorSpeed;
+        uint8_t leftDir, rightDir;
 
     } m_carkit;
 
@@ -133,11 +138,16 @@ private:
         }
     } m_lineSensor[MAX_IO_LINE_SENSOR];
 
+    void setMotorSpeed(uint8_t lSpeed = DEFAULT_PWM, uint8_t rSpeed = DEFAULT_PWM);
+    void setMotorDirection(uint8_t lDir = DIR_FORWARD, uint8_t rDir = DIR_FORWARD);
+    void setMotorState(uint8_t lState, uint8_t rState);
     int8_t turnLeft();
     int8_t turnRight();
     int8_t turnAround();
-    int8_t timerInit();
     int8_t goStraight();
+    int8_t turnLeft(uint8_t speed);
+    int8_t turnRight(uint8_t speed);
+    int8_t timerInit();
 };
 
 #endif // __CARKIT_H__
