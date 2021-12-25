@@ -17,8 +17,8 @@ Carkit::Carkit()
 
 /**
  * @brief Init()
- * 
- * @return int8_t 
+ *
+ * @return int8_t
  */
 int8_t Carkit::Init()
 {
@@ -50,8 +50,8 @@ int8_t Carkit::Init()
 
 /**
  * @brief Start()
- * 
- * @return int8_t 
+ *
+ * @return int8_t
  */
 int8_t Carkit::Start()
 {
@@ -82,11 +82,14 @@ err:
 start:
     m_carkit.leftMotorSpeed = DEFAULT_SPEED;
     m_carkit.rightMotorSpeed = DEFAULT_SPEED;
-    setMotorDirection(DIR_FORWARD, DIR_FORWARD);
-    setMotorSpeed(m_carkit.leftMotorSpeed, m_carkit.rightMotorSpeed);
+    // setMotorDirection(DIR_FORWARD, DIR_FORWARD);
+    // setMotorSpeed(m_carkit.leftMotorSpeed, m_carkit.rightMotorSpeed);
     m_carkit.carState = CAR_RUN;
-    goStraight();
-    timerInit();
+    m_carkit.carStatus = CAR_STARTED;
+    // goStraight();
+    // timerInit();
+
+    GoStraight(115, 122, DIR_FORWARD);
     return 0;
 }
 
@@ -117,8 +120,8 @@ int8_t Carkit::Reset()
  * @brief loop()
  * All function is done here,
  * Checking in the perior time SAMPLE_INTERVAL_TIME
- * 
- * @return int8_t 
+ *
+ * @return int8_t
  */
 inline int8_t Carkit::loop()
 {
@@ -126,66 +129,81 @@ inline int8_t Carkit::loop()
     // Check for carkit state every SAMPLE_INTERVAL_TIME (50ms) time
     if (millis() - m_tick > SAMPLE_INTERVAL_TIME)
     {
+        if (m_carkit.waitTick >= 0)
+            m_carkit.waitTick--;
+
         m_tick = millis();
+    }
 
-        if (m_carkit.carStatus == CAR_FINISHED)
-            return 0;
+    if (m_carkit.carStatus == CAR_FINISHED)
+        return 0;
 
-        /**
-         * User code here
-         */
-        // new check point detected
-        if (LEFT_SENSOR.diRead() && RIGHT_SENSOR.diRead() && MIDDLE_SENSOR.diRead() && m_carkit.waitTick <= 0)
+    if (LEFT_SENSOR.diRead() && RIGHT_SENSOR.diRead() && MIDDLE_SENSOR.diRead() && m_carkit.waitTick < 0)
+    {
+        m_carkit.newCheckPointDetected = true;
+
+        // each tick == SAMPLE_INTERVAL_TIME (10ms)
+        m_carkit.waitTick = 100; // 500
+        // increase the current node position
+        m_carkit.currentNode++;
+        FLOG_I(F("Current node: (%d, %d)\n"), m_carkit.currentNode.x, m_carkit.currentNode.y);
+
+        // start new move between two nodes
+        if (m_carkit.currentNode == *m_carkit.nextNode)
         {
-            m_carkit.newCheckPointDetected = true;
+            FLOG_I(F("-----> Check point\n"), NULL);
+            m_carkit.currentNode = *m_carkit.nextNode;
+            m_carkit.nextNode = m_carkit.map.GetNextPoint();
 
-            // each tick == SAMPLE_INTERVAL_TIME (50ms)
-            m_carkit.waitTick = 50; // 500
-            // increase the current node position
-            m_carkit.currentNode++;
-            FLOG_I(F("Current node: (%d, %d)\n"), m_carkit.currentNode.x, m_carkit.currentNode.y);
-
-            // start new move between two nodes
-            if (m_carkit.currentNode == *m_carkit.nextNode)
+            // carkit finished the map
+            if (m_carkit.nextNode == NULL)
             {
-                FLOG_I(F("-----> Check point\n"), NULL);
-                m_carkit.currentNode = *m_carkit.nextNode;
-                m_carkit.nextNode = m_carkit.map.GetNextPoint();
-
-                // carkit finished the map
-                if (m_carkit.nextNode == NULL)
-                {
-                    FLOG_I(F("Car arrived\n"), NULL);
-                    this->Stop();
-                    return 0;
-                }
-                delay(50);
+                FLOG_I(F("Car arrived\n"), NULL);
                 this->Stop();
-
-                FLOG_I(F("Car prepared for turnning\n"), NULL);
-                switch (m_carkit.currentNode.turn)
-                {
-                case GO_STRAIGHT:
-                    goStraight();
-                    break;
-                case GO_LEFT:
-                    turnLeft(TURN_SPEED);
-                    goStraight();
-                    break;
-                case GO_RIGHT:
-                    turnRight(TURN_SPEED);
-                    goStraight();
-                    break;
-                default:
-                    goStraight();
-                    break;
-                }
-
-                this->ReStart();
+                return 0;
             }
+            this->Stop();
+
+            FLOG_I(F("Car prepared for turnning\n"), NULL);
+            switch (m_carkit.currentNode.turn)
+            {
+            case GO_STRAIGHT:
+                // goStraight();
+                GoStraight(115, 122, DIR_FORWARD);
+                break;
+            case GO_LEFT:
+                delay(200);
+                setMotorState(MOTOR_STOP, MOTOR_STOP);
+                GoStraight(115, 122, DIR_BACKWARD);
+                delay(50);
+                GoLeft(120, 120, 250);
+                // GoRight(130,130, 300);
+                GoStraight(115, 122, DIR_FORWARD);
+
+                // turnLeft(TURN_SPEED);
+                // setMotorSpeed();
+                // goStraight();
+                break;
+            case GO_RIGHT:
+                delay(200);
+                setMotorState(MOTOR_STOP, MOTOR_STOP);
+                GoStraight(115, 122, DIR_BACKWARD);
+                delay(50);
+                GoRight(120, 120, 250);
+                // GoLeft(130,130, 300);
+                GoStraight(115, 122, DIR_FORWARD);
+                // turnRight(TURN_SPEED);
+                // setMotorSpeed();
+                // goStraight();
+                break;
+            default:
+                GoStraight(115, 122, DIR_FORWARD);
+                // goStraight();
+                break;
+            }
+
+            this->ReStart();
         }
-        m_carkit.waitTick--;
-        m_tick = millis();
     }
 
     // if get a map from serial port successfully, save it to EEPROM
@@ -195,6 +213,37 @@ inline int8_t Carkit::loop()
     }
 
     return 0;
+}
+
+int8_t Carkit::GoStraight(uint8_t lSpeed, uint8_t rSpeed, uint8_t direction)
+{
+    setMotorDirection(direction, direction);
+    setMotorSpeed(lSpeed, rSpeed);
+    setMotorState(MOTOR_RUN, MOTOR_RUN);
+}
+
+int8_t Carkit::GoLeft(uint8_t lSpeed, uint8_t rSpeed, uint32_t duration)
+{
+    setMotorState(MOTOR_STOP, MOTOR_STOP);
+    turn(lSpeed, DIR_BACKWARD, rSpeed, DIR_FORWARD, duration);
+    setMotorState(MOTOR_STOP, MOTOR_STOP);
+    setMotorDirection(DIR_FORWARD, DIR_FORWARD);
+}
+
+int8_t Carkit::GoRight(uint8_t lSpeed, uint8_t rSpeed, uint32_t duration)
+{
+    setMotorState(MOTOR_STOP, MOTOR_STOP);
+    turn(lSpeed, DIR_FORWARD, rSpeed, DIR_BACKWARD, duration);
+    setMotorState(MOTOR_STOP, MOTOR_STOP);
+    setMotorDirection(DIR_FORWARD, DIR_FORWARD);
+}
+
+void Carkit::turn(uint8_t lSpeed, uint8_t lDir, uint8_t rSpeed, uint8_t rDir, uint32_t duration)
+{
+    setMotorDirection(lDir, rDir);
+    setMotorSpeed(lSpeed, rSpeed);
+    setMotorState(MOTOR_RUN, MOTOR_RUN);
+    delay(duration);
 }
 
 inline void Carkit::setMotorSpeed(uint8_t lSpeed, uint8_t rSpeed)
@@ -349,22 +398,22 @@ inline int8_t Carkit::turnLeft(uint8_t speed)
     setMotorSpeed(speed, speed);
     setMotorDirection(DIR_BACKWARD, DIR_FORWARD);
     setMotorState(MOTOR_RUN, MOTOR_RUN);
+    delay(300);
 
-    delay(500);
-
-    while (!RIGHT_SENSOR.diRead())
+    while (!MIDDLE_SENSOR.diRead())
     {
-        timeout -= 10;
-        delay(10);
+        timeout -= 1;
+        delay(1);
         if (timeout <= 0)
             break;
     }
 
+    // setMotorSpeed(speed, speed);
     setMotorDirection(DIR_FORWARD, DIR_FORWARD);
     setMotorState(MOTOR_RUN, MOTOR_STOP);
-    delay(200);
+    delay(100);
 
-    while (!LEFT_SENSOR.diRead())
+    while (!MIDDLE_SENSOR.diRead())
     {
         timeout -= 10;
         delay(10);
@@ -372,7 +421,7 @@ inline int8_t Carkit::turnLeft(uint8_t speed)
             break;
     }
 
-    setMotorState(MOTOR_STOP, MOTOR_STOP);
+    // setMotorState(MOTOR_STOP, MOTOR_STOP);
     m_carkit.carState = carState;
     return detected;
 }
@@ -389,22 +438,22 @@ inline int8_t Carkit::turnRight(uint8_t speed)
     setMotorSpeed(speed, speed);
     setMotorDirection(DIR_FORWARD, DIR_BACKWARD);
     setMotorState(MOTOR_RUN, MOTOR_RUN);
-
     delay(300);
 
-    while (!LEFT_SENSOR.diRead())
+    while (!MIDDLE_SENSOR.diRead())
     {
-        timeout -= 10;
-        delay(10);
+        timeout -= 1;
+        delay(1);
         if (timeout <= 0)
             break;
     }
 
+    // setMotorSpeed(speed, speed);
     setMotorDirection(DIR_FORWARD, DIR_FORWARD);
     setMotorState(MOTOR_STOP, MOTOR_RUN);
-    delay(200);
+    delay(100);
 
-    while (!RIGHT_SENSOR.diRead())
+    while (!MIDDLE_SENSOR.diRead())
     {
         timeout -= 10;
         delay(10);
@@ -412,15 +461,15 @@ inline int8_t Carkit::turnRight(uint8_t speed)
             break;
     }
 
-    setMotorState(MOTOR_STOP, MOTOR_STOP);
+    // setMotorState(MOTOR_STOP, MOTOR_STOP);
     m_carkit.carState = carState;
     return detected;
 }
 
 /**
  * @brief TimerInterrupt intializes
- * 
- * @return int8_t 
+ *
+ * @return int8_t
  */
 int8_t Carkit::timerInit()
 {
@@ -440,60 +489,47 @@ int8_t Carkit::timerInit()
 #define ON_LEFT 3U
 #define ON_HALF_RIGHT 4U
 #define ON_RIGHT 5U
+#define ON_FULL_LEFT 6U
+#define ON_FULL_RIGHT 7U
 /**
  * @brief CarkitTimerHandler
  * Timer 1 interrupt, this timer used for async status checking,
  * or line detection algorithm
- * @param carkit 
+ * @param carkit
  */
 static void Carkit::CarkitTimerHandler(Carkit *carkit)
 {
     static uint8_t m_leftSpeed = 0;
     static uint8_t m_ritghtSpeed = 0;
-    uint8_t subSpeed = 0;
+    static uint8_t subSpeed = 0;
 
 #define M_SENSOR (carkit->m_lineSensor[0])
 #define L_SENSOR (carkit->m_lineSensor[1])
 #define R_SENSOR (carkit->m_lineSensor[2])
 
     if (carkit->m_carkit.carState == CAR_TURN_LEFT || carkit->m_carkit.carState == CAR_TURN_RIGHT)
-        return;
-
-    if (M_SENSOR.diRead() && !L_SENSOR.diRead() && !R_SENSOR.diRead())
     {
-        carkit->m_carkit.carDir = ON_MIDDLE;
-    }
-
-    // carkit is out of line
-    // shift left
-    // if left motor speed is not equal to max value, then increase it 5 value
-    // else
-    // decerease right motr speed 5
-    if (!M_SENSOR.diRead() && !L_SENSOR.diRead() && R_SENSOR.diRead())
-    {
-        carkit->m_carkit.carDir = ON_LEFT;
-        subSpeed = 2;
-    }
-    else if (M_SENSOR.diRead() && R_SENSOR.diRead() && !L_SENSOR.diRead())
-    {
-        carkit->m_carkit.carDir = ON_HALF_LEFT;
-        subSpeed = 1;
-    }
-    else if (!M_SENSOR.diRead() && !R_SENSOR.diRead() && L_SENSOR.diRead())
-    {
-        // carkit is out of line
-        // shift right
-        carkit->m_carkit.carDir = ON_RIGHT;
-        subSpeed = 2;
-    }
-    else if (M_SENSOR.diRead() && !R_SENSOR.diRead() && L_SENSOR.diRead())
-    {
-        carkit->m_carkit.carDir = ON_HALF_RIGHT;
-        subSpeed = 1;
+        carkit->m_carkit.carDir = carkit->m_carkit.carState == CAR_TURN_LEFT ? ON_LEFT : ON_RIGHT;
     }
     else
     {
-        ;
+        if (M_SENSOR.diRead())
+        {
+            subSpeed = 0;
+            carkit->m_carkit.carDir = ON_MIDDLE;
+        }
+        else if (!M_SENSOR.diRead() && !L_SENSOR.diRead() && R_SENSOR.diRead())
+        {
+            carkit->m_carkit.carDir = ON_LEFT;
+            subSpeed = 5;
+        }
+        else if (!M_SENSOR.diRead() && !R_SENSOR.diRead() && L_SENSOR.diRead())
+        {
+            // carkit is out of line
+            // shift right
+            carkit->m_carkit.carDir = ON_RIGHT;
+            subSpeed = 5;
+        }
     }
 
     m_leftSpeed = carkit->m_carkit.leftMotorSpeed;
@@ -511,7 +547,14 @@ static void Carkit::CarkitTimerHandler(Carkit *carkit)
         {
             m_ritghtSpeed -= subSpeed;
         }
-        // FLOG_I(F("Car Dir: ON LEFT\n"), NULL);
+        // else
+        // {
+        //     if (m_leftSpeed <= (MAX_SPEED - subSpeed))
+        //     {
+        //         m_leftSpeed += subSpeed;
+        //     }
+        // }
+        FLOG_I(F("Car Dir: ON LEFT\n"), NULL);
         break;
     case ON_RIGHT:
     case ON_HALF_RIGHT:
@@ -519,17 +562,24 @@ static void Carkit::CarkitTimerHandler(Carkit *carkit)
         {
             m_ritghtSpeed += subSpeed;
         }
-        // FLOG_I(F("Car Dir: ON RIGHT\n"), NULL);
+        // else
+        // {
+        //     if (m_leftSpeed > (MIN_SPEED + subSpeed))
+        //     {
+        //         m_leftSpeed -= subSpeed;
+        //     }
+        // }
+        FLOG_I(F("Car Dir: ON RIGHT\n"), NULL);
         break;
     default:
         break;
     }
-    if (carkit->m_carkit.carState == CAR_RUN)
+
+    if (carkit->m_carkit.carState == CAR_RUN && carkit->m_carkit.waitTick < 0)
     {
-        // FLOG_I(F("Set car speed (l,r): %u, %u\n"), m_leftSpeed, m_ritghtSpeed);
+        FLOG_I(F("Set car speed (l,r): %u, %u\n"), m_leftSpeed, m_ritghtSpeed);
         carkit->m_carkit.leftMotorSpeed = m_leftSpeed;
         carkit->m_carkit.rightMotorSpeed = m_ritghtSpeed;
-        carkit->m_leftMotor->setMotorSpeed(carkit->m_carkit.leftMotorSpeed);
-        carkit->m_rightMotor->setMotorSpeed(carkit->m_carkit.rightMotorSpeed);
+        carkit->setMotorSpeed(m_leftSpeed, m_ritghtSpeed);
     }
 }

@@ -18,7 +18,7 @@
 #define USE_DEBUG 1
 /**
  * TimerInterrupt macros
- * 
+ *
  */
 #define TIMER_INTERVAL_MS 10
 #define TIMER_DURATION_MS 0
@@ -48,13 +48,13 @@
 
 #define CHECK_LINE_SENSOR_TIMEOUT (5000)
 
-#define DEFAULT_SPEED 150U
-#define MAX_SPEED 210U
+#define DEFAULT_SPEED 130U
+#define MAX_SPEED 180U
 #define MIN_SPEED 110U
 #define TURN_SPEED 110U
 /**
  * @brief Cakit class
- * 
+ *
  */
 class Carkit
 {
@@ -85,6 +85,13 @@ public:
 
     int8_t loop();
     static void CarkitTimerHandler(Carkit *carkit);
+
+    int8_t GoStraight(uint8_t lSpeed, uint8_t rSpeed, uint8_t direction);
+    int8_t GoLeft(uint8_t lSpeed, uint8_t rSpeed, uint32_t duration);
+    int8_t GoRight(uint8_t lSpeed, uint8_t rSpeed, uint32_t duration);
+
+private:
+    void turn(uint8_t lSpeed, uint8_t lDir, uint8_t rSpeed, uint8_t rDir, uint32_t duration);
 
 private:
     CarkitMotor *m_leftMotor;
